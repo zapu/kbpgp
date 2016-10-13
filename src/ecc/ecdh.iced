@@ -28,15 +28,15 @@ class Pub extends BaseEccKey
   read_params : (sb) ->
     if (size = sb.read_uint8()) < (n = Const.ecdh.param_bytes)
       throw new Error "Need at least #{n} bytes of params; got #{size}"
-    if (val = sb.read_uint8()) isnt (v = Const.ecdh.version)
-      throw new Error "Cannot deal with future extensions, byte=#{val}; wanted #{v}"
+    if (@ecdh_ver = sb.read_uint8()) isnt (v = Const.ecdh.version)
+      console.log "Cannot deal with future extensions, byte=#{@ecdh_ver}; wanted #{v}"
 
     # Will throw if either hasher or cipher cannot be found
     @hasher = hashmod.alloc_or_throw sb.read_uint8()
     @cipher = sym.get_cipher sb.read_uint8()
 
     # 1 byte for each of the three above fields
-    sb.advance(size - 3)
+    @leftovers = sb.read_buffer(size - 3)
 
   #----------------
 
@@ -45,12 +45,14 @@ class Pub extends BaseEccKey
   #----------------
 
   serialize_params : () ->
-    Buffer.concat [
+    ret = Buffer.concat [
       uint_to_buffer(8,Const.ecdh.param_bytes),
-      uint_to_buffer(8,Const.ecdh.version),
+      uint_to_buffer(8,@ecdh_ver),
       uint_to_buffer(8,@hasher.type),
-      uint_to_buffer(8,@cipher.type)
+      uint_to_buffer(8,@cipher.type),
+      @leftovers
     ]
+    return ret
   #----------------
 
   serialize : () -> Buffer.concat [ super(), @serialize_params() ]

@@ -37,7 +37,7 @@ exports.import_key_pgp = import_key_pgp = (msg, pkcs5_padding = false) ->
   # Next, check the key remainder, and be strict about no trailing junk,
   # and we must apply pkcs5_padding if it's been asked for, to ensure the
   # mod 8 requirement at the very least.
-  err = if checksum2(key) isnt checksum then new Error "Checksum mismatch" 
+  err = if checksum2(key) isnt checksum then new Error "Checksum mismatch"
   else if pkcs5_padding then ecc_pkcs5_unpad_data msg, sb.offset()
   else if not sb.rem() then null
   else new Error "Junk at the end of input"
